@@ -1,4 +1,4 @@
-package com.hangman.api
+package com.hangman.api.models
 
 /**
  * Created by sinaastani on 4/26/18.

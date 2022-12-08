@@ -1,5 +1,12 @@
-package com.hangman.api
+package com.hangman.api.web
 
+import com.hangman.api.exception.GameDoesNotExistException
+import com.hangman.api.exception.GameOverException
+import com.hangman.api.exception.InvalidCharacterException
+import com.hangman.api.models.Game
+import com.hangman.api.models.GameStatus
+import com.hangman.api.models.Guess
+import com.hangman.api.models.StartedGame
 import jakarta.annotation.PostConstruct
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpSession
@@ -24,6 +31,9 @@ internal class GamesController {
     }
 
 
+    /**
+     * Get list of active games in session
+     */
     @GetMapping("/games")
     fun getGameList(session: HttpSession): List<Game> {
         val games = session.getAttribute("games")
@@ -35,6 +45,9 @@ internal class GamesController {
     }
 
 
+    /**
+     * Create new game
+     */
     @RequestMapping(value = ["/new"], method = [RequestMethod.GET])
     fun startGame(session: HttpSession): StartedGame {
 
@@ -64,8 +77,9 @@ internal class GamesController {
         return ResponseEntity(error, HttpStatus.NOT_FOUND)
     }
 
-    //POST
-    //make guess
+    /**
+     * Make guess
+     */
     @RequestMapping(
         value = ["/guess"],
         method = [RequestMethod.POST],
@@ -98,7 +112,9 @@ internal class GamesController {
         return ResponseEntity(game, HttpStatus.OK)
     }
 
-    // Find an existing game
+    /**
+     * Find an existing game
+     */
     @Throws(GameDoesNotExistException::class)
     private fun getGame(id: String, session: HttpSession): Game {
         val games = session.getAttribute("games") as List<Game>

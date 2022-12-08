@@ -1,6 +1,4 @@
-package com.hangman.api
+package com.hangman.api.exception
 
-/**
- * Created by sinaastani on 4/26/18.
- */
+
 class InvalidCharacterException(s: String?) : Exception(String.format("Guessed character %s is invalid.", s))

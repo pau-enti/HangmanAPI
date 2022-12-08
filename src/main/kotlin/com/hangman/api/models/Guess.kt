@@ -1,4 +1,4 @@
-package com.hangman.api
+package com.hangman.api.models
 
 class Guess {
     var game: String? = null

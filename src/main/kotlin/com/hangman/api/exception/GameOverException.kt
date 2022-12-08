@@ -1,6 +1,4 @@
-package com.hangman.api
+package com.hangman.api.exception
 
-/**
- * Created by sinaastani on 4/27/18.
- */
+
 class GameOverException : Exception(String.format("Game is already complete"))

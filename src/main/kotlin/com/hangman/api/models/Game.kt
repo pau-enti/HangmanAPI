@@ -1,4 +1,4 @@
-package com.hangman.api
+package com.hangman.api.models
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.*
