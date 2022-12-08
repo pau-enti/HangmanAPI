@@ -1,9 +1,10 @@
 package com.hangman.api.models
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.hangman.api.web.WordsLists
 import java.util.*
 
-class Game(words: ArrayList<String>) {
+class Game(words: ArrayList<String>, val language: WordsLists.Language) {
     val id: String = createId()
 
     @get:JsonIgnore

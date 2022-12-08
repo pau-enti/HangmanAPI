@@ -7,28 +7,23 @@ import com.hangman.api.models.Game
 import com.hangman.api.models.GameStatus
 import com.hangman.api.models.Guess
 import com.hangman.api.models.StartedGame
-import jakarta.annotation.PostConstruct
+import com.hangman.api.web.WordsLists.Language.*
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpSession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
 import java.util.*
 import kotlin.collections.ArrayList
 
 @RestController
 internal class GamesController {
-    private lateinit var wordList: ArrayList<String>
 
     @Autowired
     private val servletContext: ServletContext? = null
-
-    @PostConstruct
-    fun init() {
-        val game = GamesInit()
-        wordList = game.wordList
-    }
 
 
     /**
@@ -44,12 +39,27 @@ internal class GamesController {
         }
     }
 
+    /**
+     * Get a game from session
+     */
+    @GetMapping("/game")
+    @ExceptionHandler(GameDoesNotExistException::class)
+    private fun getGame(id: String?, session: HttpSession): Game {
+        val games = getGameList(session)
+
+        for (game in games) {
+            if (game.id == id)
+                return game
+        }
+//        throw ResponseStatusException(HttpStatusCode.valueOf(400))
+        throw GameDoesNotExistException(id)
+    }
 
     /**
      * Create new game
      */
     @RequestMapping(value = ["/new"], method = [RequestMethod.GET])
-    fun startGame(session: HttpSession): StartedGame {
+    fun startGame(@RequestParam lang: String?, session: HttpSession): StartedGame {
 
         // Get list of games in session
         val games = session.getAttribute("games").let { data ->
@@ -62,7 +72,13 @@ internal class GamesController {
             }
         }
 
-        val newGame = Game(wordList)
+        val languageCode = WordsLists.Language.values().find { lang == it.code } ?: EN
+        val words = when (languageCode) {
+            EN -> WordsLists.english
+            CAT -> WordsLists.catala
+        }
+
+        val newGame = Game(words, languageCode)
         games.add(newGame)
         session.setAttribute("games", games)
 
@@ -101,7 +117,6 @@ internal class GamesController {
             GameStatus.ACTIVE -> {}
             GameStatus.WON -> return gameOver()
             GameStatus.LOST -> return gameOver()
-            else -> throw GameDoesNotExistException("no status")
         }
 
         if (!isLetterInsideWord(letter, game)) game.increaseIncorrectGuesses()
@@ -112,24 +127,6 @@ internal class GamesController {
         return ResponseEntity(game, HttpStatus.OK)
     }
 
-    /**
-     * Find an existing game
-     */
-    @Throws(GameDoesNotExistException::class)
-    private fun getGame(id: String, session: HttpSession): Game {
-        val games = session.getAttribute("games") as List<Game>
-        var g: Game? = null
-        for (i in games.indices) {
-            g = games[i]
-            if (g.id == id) {
-                break
-            }
-        }
-        if (g == null) {
-            throw GameDoesNotExistException(id)
-        }
-        return g
-    }
 
     //clean up input if more than one character/keep only first char
     private fun cleanUp(letter: String): Char {

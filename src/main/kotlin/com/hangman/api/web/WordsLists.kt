@@ -2,15 +2,26 @@ package com.hangman.api.web
 
 import java.io.*
 
-internal class GamesInit {
-    val wordList: ArrayList<String>
+object WordsLists {
 
-    init {
-        val fpath = System.getProperty("user.dir") + File.separator + "bogwords.txt"
-        wordList = createWordList(fpath)
+    private const val EN_WORDS_FILE = "words_en.txt"
+    private const val CAT_WORDS_FILE = "words_cat.txt"
+
+    enum class Language(val code: String) {
+        EN("en"), CAT("cat")
     }
 
-    private fun createWordList(file: String): ArrayList<String> {
+    val english: ArrayList<String>
+    val catala: ArrayList<String>
+
+    init {
+        val path = System.getProperty("user.dir") + File.separator
+
+        english = loadWordsFromFile(path + EN_WORDS_FILE)
+        catala = loadWordsFromFile(path + CAT_WORDS_FILE)
+    }
+
+    private fun loadWordsFromFile(file: String): ArrayList<String> {
         val wordList = ArrayList<String>()
         try {
             val br = BufferedReader(FileReader(file))
