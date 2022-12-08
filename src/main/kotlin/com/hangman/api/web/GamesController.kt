@@ -3,8 +3,7 @@ package com.hangman.api.web
 import com.hangman.api.exception.GameDoesNotExistException
 import com.hangman.api.exception.InvalidCharacterException
 import com.hangman.api.models.*
-import com.hangman.api.web.WordsLists.Language.CAT
-import com.hangman.api.web.WordsLists.Language.EN
+import com.hangman.api.web.WordsLists.Language.*
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpSession
 import org.springframework.beans.factory.annotation.Autowired
@@ -70,6 +69,7 @@ internal class GamesController {
         val languageCode = WordsLists.Language.values().find { lang == it.code } ?: EN
         val words = when (languageCode) {
             EN -> WordsLists.english
+            ES -> WordsLists.spanish
             CAT -> WordsLists.catala
         }
 
