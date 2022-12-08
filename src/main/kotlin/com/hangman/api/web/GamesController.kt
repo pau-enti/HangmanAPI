@@ -1,23 +1,17 @@
 package com.hangman.api.web
 
 import com.hangman.api.exception.GameDoesNotExistException
-import com.hangman.api.exception.GameOverException
 import com.hangman.api.exception.InvalidCharacterException
-import com.hangman.api.models.Game
-import com.hangman.api.models.GameStatus
-import com.hangman.api.models.Guess
-import com.hangman.api.models.StartedGame
-import com.hangman.api.web.WordsLists.Language.*
+import com.hangman.api.models.*
+import com.hangman.api.web.WordsLists.Language.CAT
+import com.hangman.api.web.WordsLists.Language.EN
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpSession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
 import java.util.*
-import kotlin.collections.ArrayList
 
 @RestController
 internal class GamesController {
@@ -43,22 +37,23 @@ internal class GamesController {
      * Get a game from session
      */
     @GetMapping("/game")
-    @ExceptionHandler(GameDoesNotExistException::class)
-    private fun getGame(id: String?, session: HttpSession): Game {
+    fun getGame(@RequestParam token: String, session: HttpSession): Game {
         val games = getGameList(session)
 
         for (game in games) {
-            if (game.id == id)
+            if (game.token == token)
                 return game
         }
-//        throw ResponseStatusException(HttpStatusCode.valueOf(400))
-        throw GameDoesNotExistException(id)
+        throw GameDoesNotExistException(token)
     }
+
+    @GetMapping("/hangman")
+    fun getGame_compatibility(@RequestParam token: String, session: HttpSession): Game = getGame(token, session)
 
     /**
      * Create new game
      */
-    @RequestMapping(value = ["/new"], method = [RequestMethod.GET])
+    @GetMapping("/new")
     fun startGame(@RequestParam lang: String?, session: HttpSession): StartedGame {
 
         // Get list of games in session
@@ -85,63 +80,41 @@ internal class GamesController {
         return StartedGame(newGame)
     }
 
-    //exception handler for dealing with games that are not active
-    @ExceptionHandler(GameOverException::class)
-    private fun gameOver(): ResponseEntity<GameOverInfo> {
-        val s = "Game is already complete"
-        val error = GameOverInfo(s)
-        return ResponseEntity(error, HttpStatus.NOT_FOUND)
-    }
+
+    @PostMapping("/hangman")
+    fun startGame_compatible(@RequestParam lang: String?, session: HttpSession): StartedGame = startGame(lang, session)
+
 
     /**
      * Make guess
      */
-    @RequestMapping(
-        value = ["/guess"],
-        method = [RequestMethod.POST],
-        headers = ["Accept=application/json"],
-        consumes = ["application/json"],
-        produces = ["application/json"]
-    )
-    @Throws(
-        GameDoesNotExistException::class, InvalidCharacterException::class
-    )
-    fun makeGuess(@RequestBody guess: Guess, session: HttpSession): ResponseEntity<*> {
-        val gameId = guess.game ?: throw GameDoesNotExistException(null)
-        val letterInput = guess.guess ?: throw InvalidCharacterException(null)
-        val letter = cleanUp(letterInput)
+    @PostMapping("/guess")
+    fun makeGuess(@RequestBody guess: GuessInput, session: HttpSession): ResponseEntity<*> {
+        val gameId = guess.token ?: throw GameDoesNotExistException(null)
+        val letterInput = guess.letter ?: throw InvalidCharacterException(null)
 
         val game = getGame(gameId, session)
+        if (game.status == GameStatus.WON || game.status == GameStatus.LOST)
+            return gameOver(game.status)
 
-        when (game.status) {
-            GameStatus.ACTIVE -> {}
-            GameStatus.WON -> return gameOver()
-            GameStatus.LOST -> return gameOver()
-        }
-
-        if (!isLetterInsideWord(letter, game)) game.increaseIncorrectGuesses()
-        else game.guessLetter(letter)
-
-        game.updateStatus()
-
-        return ResponseEntity(game, HttpStatus.OK)
+        val isCorrect = game.guessLetter(letterInput)
+        return ResponseEntity(GuessOutput(game.token, game.hangman, isCorrect), HttpStatus.OK)
     }
 
+    @PutMapping("/hangman")
+    fun makeGuess_compatiblity(
+        @RequestParam token: String,
+        @RequestParam letter: String,
+        session: HttpSession
+    ): ResponseEntity<*> =
+        makeGuess(GuessInput(token, letter), session)
 
-    //clean up input if more than one character/keep only first char
-    private fun cleanUp(letter: String): Char {
-        if (letter.isBlank()) throw InvalidCharacterException(letter)
+    private fun gameOver(status: GameStatus): ResponseEntity<GameOverInfo> {
+        val cause = if (status == GameStatus.WON)
+            "You won!"
+        else
+            "You lose"
 
-        val guess = letter.lowercase(Locale.getDefault())
-        return guess.first()
-    }
-
-    private fun isLetterInsideWord(letter: Char, game: Game): Boolean {
-        val word = game.word
-        val correct: Boolean
-        val cs: CharSequence = letter.toString()
-        //check if word contains given char
-        correct = word.contains(cs)
-        return correct
+        return ResponseEntity(GameOverInfo(cause), HttpStatus.OK)
     }
 }

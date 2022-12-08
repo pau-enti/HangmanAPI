@@ -1,26 +1,26 @@
 package com.hangman.api.models
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.hangman.api.exception.InvalidCharacterException
 import com.hangman.api.web.WordsLists
 import java.util.*
 
 class Game(words: ArrayList<String>, val language: WordsLists.Language) {
-    val id: String = createId()
+    val token: String = UUID.randomUUID().toString()
 
-    @get:JsonIgnore
-    val word = chooseWord(words)
+    val solution = words.random()
 
-    var guessedWord = initGameString(word.length)
+    var hangman = newGameOfLength(solution.length)
         private set
 
     var status: GameStatus = GameStatus.ACTIVE
         private set
 
-    private var incorrectGuesses: Int = 0
+    var incorrectGuesses: Int = 0
+        private set
 
 
-    fun updateStatus() {
-        if (word == guessedWord) {
+    private fun updateStatus() {
+        if (solution == hangman) {
             status = GameStatus.WON
         } else {
             if (incorrectGuesses < MAX_TRIES) {
@@ -32,51 +32,60 @@ class Game(words: ArrayList<String>, val language: WordsLists.Language) {
         }
     }
 
-    fun increaseIncorrectGuesses() {
-        incorrectGuesses++
-    }
 
-    fun guessLetter(intent: Char) {
+    fun guessLetter(intent: String): Boolean {
+        val letter = cleanUp(intent)
+
+        // If letter not inside word
+        if (!solution.contains(letter.toString())) {
+            ++incorrectGuesses
+            return false
+        }
+
         val intentsFound = ArrayList<Int>()
 
-        // find all indices where guessed character is located in word
-        for (i in word.indices) {
-            if (word[i] == intent)
+        // Find all indices where guessed character is located in word
+        for (i in solution.indices) {
+            if (solution[i] == letter)
                 intentsFound.add(i)
         }
 
         val newGuessedWord = StringBuilder()
 
-        for (i in guessedWord.indices) {
+        for (i in hangman.indices) {
 
             // If it's a space that should be replaced with the letter
             if (intentsFound.contains(i))
-                newGuessedWord.append(intent)
+                newGuessedWord.append(letter)
 
             // If we should maintain the result
             else
-                newGuessedWord.append(guessedWord[i])
+                newGuessedWord.append(hangman[i])
         }
 
-        guessedWord = newGuessedWord.toString()
+        hangman = newGuessedWord.toString()
+        updateStatus()
+
+        return true
+    }
+
+
+    private fun cleanUp(letter: String): Char {
+        if (letter.isBlank()) throw InvalidCharacterException(letter)
+
+        val guess = letter.lowercase(Locale.getDefault())
+        return guess.first()
     }
 
     companion object {
         private const val MAX_TRIES = 7
 
-        //choose word from word list
-        private fun chooseWord(words: ArrayList<String>): String = words.random()
-
-        private fun initGameString(word_len: Int): String {
-            val w: String
+        private fun newGameOfLength(len: Int): String {
             val sb = StringBuilder()
-            for (i in 0 until word_len) {
+            for (i in 0 until len) {
                 sb.append("_")
             }
-            w = sb.toString()
-            return w
+            return sb.toString()
         }
-
-        private fun createId(): String = UUID.randomUUID().toString()
     }
 }

@@ -1,8 +1,8 @@
 package com.hangman.api.models
 
 data class StartedGame(
-    val gameId: String,
-    val word: String
+    val token: String,
+    val hangman: String
 ) {
-    constructor(game: Game) : this(game.id, game.guessedWord)
+    constructor(game: Game) : this(game.token, game.hangman)
 }

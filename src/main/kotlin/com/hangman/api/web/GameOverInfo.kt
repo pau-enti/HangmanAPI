@@ -1,3 +1,3 @@
 package com.hangman.api.web
 
-data class GameOverInfo(var error: String = "error")
+data class GameOverInfo(val cause: String)
