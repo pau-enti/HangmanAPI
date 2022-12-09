@@ -1,6 +1,6 @@
-package com.hangman.api.models
+package com.hangman.api.models.io
 
-class GuessInput(
+data class GuessInput(
     var token: String? = null,
     var letter: String? = null
 )

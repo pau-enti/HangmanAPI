@@ -1,4 +1,3 @@
 package com.hangman.api.models.io
 
-class HintOutput {
-}
+data class HintOutput(val token: String, val hint: Char)
