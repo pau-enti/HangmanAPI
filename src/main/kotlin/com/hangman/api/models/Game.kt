@@ -1,10 +1,11 @@
 package com.hangman.api.models
 
+import com.hangman.api.exception.GameOverException
 import com.hangman.api.exception.InvalidCharacterException
 import com.hangman.api.web.WordsLists
 import java.util.*
 
-class Game(words: ArrayList<String>, val language: WordsLists.Language) {
+class Game(words: ArrayList<String>, val language: WordsLists.Language, val maxTries: Int? = null) {
     val token: String = UUID.randomUUID().toString()
 
     val solution = words.random()
@@ -12,22 +13,26 @@ class Game(words: ArrayList<String>, val language: WordsLists.Language) {
     var hangman = newGameOfLength(solution.length)
         private set
 
-    var status: GameStatus = GameStatus.ACTIVE
+    var status: Status = Status.ACTIVE
         private set
 
     var incorrectGuesses: Int = 0
         private set
 
+    enum class Status {
+        ACTIVE, WON, LOST
+    }
+
 
     private fun updateStatus() {
         if (solution == hangman) {
-            status = GameStatus.WON
-        } else {
-            if (incorrectGuesses < MAX_TRIES) {
-                status = GameStatus.ACTIVE
+            status = Status.WON
+        } else if (maxTries != null) {
+            if (incorrectGuesses < maxTries) {
+                status = Status.ACTIVE
             }
-            if (incorrectGuesses >= MAX_TRIES) {
-                status = GameStatus.LOST
+            if (incorrectGuesses >= maxTries) {
+                status = Status.LOST
             }
         }
     }
@@ -39,6 +44,7 @@ class Game(words: ArrayList<String>, val language: WordsLists.Language) {
         // If letter not inside word
         if (!solution.contains(letter.toString())) {
             ++incorrectGuesses
+            updateStatus()
             return false
         }
 
@@ -64,8 +70,8 @@ class Game(words: ArrayList<String>, val language: WordsLists.Language) {
         }
 
         hangman = newGuessedWord.toString()
-        updateStatus()
 
+        updateStatus()
         return true
     }
 
@@ -77,9 +83,19 @@ class Game(words: ArrayList<String>, val language: WordsLists.Language) {
         return guess.first()
     }
 
-    companion object {
-        private const val MAX_TRIES = 7
+    fun giveMeAHint(): Char {
+        if (status != Status.ACTIVE)
+            throw GameOverException(status)
 
+        // Get a list with the unrevealed letters
+        val unrevealedLetters = solution.filterIndexed { index, _ ->
+            hangman.getOrNull(index) == '_'
+        }
+
+        return unrevealedLetters.randomOrNull() ?: throw InvalidCharacterException("No letters missing")
+    }
+
+    companion object {
         private fun newGameOfLength(len: Int): String {
             val sb = StringBuilder()
             for (i in 0 until len) {
