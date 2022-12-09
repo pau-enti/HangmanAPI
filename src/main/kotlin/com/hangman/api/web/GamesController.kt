@@ -1,8 +1,13 @@
 package com.hangman.api.web
 
 import com.hangman.api.exception.GameDoesNotExistException
+import com.hangman.api.exception.GameOverException
 import com.hangman.api.exception.InvalidCharacterException
 import com.hangman.api.models.*
+import com.hangman.api.models.io.GuessInput
+import com.hangman.api.models.io.GuessOutput
+import com.hangman.api.models.io.HintOutput
+import com.hangman.api.models.io.NewGameOutput
 import com.hangman.api.web.WordsLists.Language.*
 import jakarta.servlet.ServletContext
 import jakarta.servlet.http.HttpSession
@@ -53,7 +58,7 @@ internal class GamesController {
      * Create new game
      */
     @GetMapping("/new")
-    fun startGame(@RequestParam lang: String?, session: HttpSession): StartedGame {
+    fun startGame(@RequestParam lang: String?, @RequestParam maxTries: Int?, session: HttpSession): NewGameOutput {
 
         // Get list of games in session
         val games = session.getAttribute("games").let { data ->
@@ -73,16 +78,20 @@ internal class GamesController {
             CAT -> WordsLists.catala
         }
 
-        val newGame = Game(words, languageCode)
+        val newGame = Game(words, languageCode, maxTries)
         games.add(newGame)
         session.setAttribute("games", games)
 
-        return StartedGame(newGame)
+        return NewGameOutput(newGame)
     }
 
 
     @PostMapping("/hangman")
-    fun startGame_compatible(@RequestParam lang: String?, session: HttpSession): StartedGame = startGame(lang, session)
+    fun startGame_compatible(
+        @RequestParam lang: String?,
+        @RequestParam maxTries: Int?,
+        session: HttpSession
+    ): NewGameOutput = startGame(lang, maxTries, session)
 
 
     /**
@@ -94,11 +103,11 @@ internal class GamesController {
         val letterInput = guess.letter ?: throw InvalidCharacterException(null)
 
         val game = getGame(gameId, session)
-        if (game.status == GameStatus.WON || game.status == GameStatus.LOST)
-            return gameOver(game.status)
+        if (game.status == Game.Status.WON || game.status == Game.Status.LOST)
+            throw GameOverException(game.status)
 
         val isCorrect = game.guessLetter(letterInput)
-        return ResponseEntity(GuessOutput(game.token, game.hangman, isCorrect), HttpStatus.OK)
+        return ResponseEntity(GuessOutput(game.token, game.hangman, game.incorrectGuesses, isCorrect), HttpStatus.OK)
     }
 
     @PutMapping("/hangman")
@@ -109,12 +118,12 @@ internal class GamesController {
     ): ResponseEntity<*> =
         makeGuess(GuessInput(token, letter), session)
 
-    private fun gameOver(status: GameStatus): ResponseEntity<GameOverInfo> {
-        val cause = if (status == GameStatus.WON)
-            "You won!"
-        else
-            "You lose"
-
-        return ResponseEntity(GameOverInfo(cause), HttpStatus.OK)
+    /**
+     * Get a hint
+     */
+    @GetMapping("/hint")
+    fun giveMeAHint(@RequestParam token: String, session: HttpSession): HintOutput {
+        val game = getGame(token, session)
+        return HintOutput(game.token, game.giveMeAHint())
     }
 }
