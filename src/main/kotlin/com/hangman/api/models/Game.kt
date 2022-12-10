@@ -4,11 +4,13 @@ import com.hangman.api.exception.GameOverException
 import com.hangman.api.exception.InvalidCharacterException
 import com.hangman.api.web.WordsLists
 import java.util.*
+import kotlin.NoSuchElementException
 
-class Game(words: ArrayList<String>, val language: WordsLists.Language, val maxTries: Int? = null) {
+class Game(words: List<String>, val language: WordsLists.Language, val maxTries: Int? = null) {
     val token: String = UUID.randomUUID().toString()
 
-    val solution = words.random()
+    val solution = words.randomOrNull()
+        ?: throw NoSuchElementException("The words list is empty. Check that the files with the words are in the same directory as the .jar file")
 
     var hangman = newGameOfLength(solution.length)
         private set
