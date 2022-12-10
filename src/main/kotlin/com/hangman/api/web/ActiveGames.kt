@@ -6,15 +6,15 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 object ActiveGames : ArrayList<Game>() {
-    const val GAMES_MAX_TIME_SESSION_MILLIS = 10_000L //3 * 60 * 60 * 1000 // 1 day
-    const val PURGE_PERIOD = 5000L//GAMES_MAX_TIME_SESSION_MILLIS / 100L
+    const val GAMES_MAX_TIME_SESSION_MILLIS = 1 * 60 * 60 * 1000L // 1 hour
+    const val PURGE_PERIOD = 10 * 60 * 1000L // 10 min
 
     private val deathTime = HashMap<Game, Long>()
 
     private val killer = Timer(true).apply {
         scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                println("Running purge ${System.currentTimeMillis()}")
+                // println("Running purge ${System.currentTimeMillis()}")
 
                 ActiveGames.removeAll { game ->
                     val death = deathTime[game] ?: return@removeAll true
