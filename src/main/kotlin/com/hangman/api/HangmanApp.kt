@@ -9,11 +9,3 @@ class ApiApplication
 fun main(args: Array<String>) {
 	runApplication<ApiApplication>(*args)
 }
-
-class HangmanAppBoot {
-	companion object {
-		@JvmStatic fun main(args: Array<String>) {
-			runApplication<ApiApplication>(*args)
-		}
-	}
-}
