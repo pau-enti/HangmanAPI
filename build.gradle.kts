@@ -40,6 +40,6 @@ tasks.withType<Test> {
 }
 
 application {
-	mainClass.set("com.hangman.api.HangmanAppBoot")
+	mainClass.set("com.hangman.api.HangmanAppKt")
 }
 
