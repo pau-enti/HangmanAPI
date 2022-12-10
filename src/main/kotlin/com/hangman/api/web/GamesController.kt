@@ -20,29 +20,19 @@ import java.util.*
 @RestController
 internal class GamesController {
 
-    @Autowired
-    private val servletContext: ServletContext? = null
-
-
     /**
      * Get list of active games in session
      */
     @GetMapping("/games")
-    fun getGameList(session: HttpSession): List<Game> {
-        val games = session.getAttribute("games")
-        return if (games != null && games is List<*>) {
-            games.filterIsInstance(Game::class.java) as MutableList
-        } else { // if (games == null)
-            ArrayList()
-        }
-    }
+    fun getGameList(): List<Game> = ActiveGames
+
 
     /**
      * Get a game from session
      */
     @GetMapping("/game")
-    fun getGame(@RequestParam token: String, session: HttpSession): Game {
-        val games = getGameList(session)
+    fun getGame(@RequestParam token: String): Game {
+        val games = getGameList()
 
         for (game in games) {
             if (game.token == token)
@@ -52,25 +42,13 @@ internal class GamesController {
     }
 
     @GetMapping("/hangman")
-    fun getGame_compatibility(@RequestParam token: String, session: HttpSession): Game = getGame(token, session)
+    fun getGame_compatibility(@RequestParam token: String): Game = getGame(token)
 
     /**
      * Create new game
      */
     @GetMapping("/new")
-    fun startGame(@RequestParam lang: String?, @RequestParam maxTries: Int?, session: HttpSession): NewGameOutput {
-
-        // Get list of games in session
-        val games = session.getAttribute("games").let { data ->
-            if (data is MutableList<*>) {
-                data.filterIsInstance(Game::class.java) as MutableList
-            } else { // if (games == null)
-                ArrayList<Game>().also { new ->
-                    session.setAttribute("games", new)
-                }
-            }
-        }
-
+    fun startGame(@RequestParam lang: String?, @RequestParam maxTries: Int?): NewGameOutput {
         val languageCode = WordsLists.Language.values().find { lang == it.code } ?: EN
         val words = when (languageCode) {
             EN -> WordsLists.english
@@ -79,8 +57,7 @@ internal class GamesController {
         }
 
         val newGame = Game(words, languageCode, maxTries)
-        games.add(newGame)
-        session.setAttribute("games", games)
+        ActiveGames.add(newGame)
 
         return NewGameOutput(newGame)
     }
@@ -91,18 +68,18 @@ internal class GamesController {
         @RequestParam lang: String?,
         @RequestParam maxTries: Int?,
         session: HttpSession
-    ): NewGameOutput = startGame(lang, maxTries, session)
+    ): NewGameOutput = startGame(lang, maxTries)
 
 
     /**
      * Make guess
      */
     @PostMapping("/guess")
-    fun makeGuess(@RequestBody guess: GuessInput, session: HttpSession): ResponseEntity<*> {
+    fun makeGuess(@RequestBody guess: GuessInput): ResponseEntity<*> {
         val gameId = guess.token ?: throw GameDoesNotExistException(null)
         val letterInput = guess.letter ?: throw InvalidCharacterException(null)
 
-        val game = getGame(gameId, session)
+        val game = getGame(gameId)
         if (game.status == Game.Status.WON || game.status == Game.Status.LOST)
             throw GameOverException(game.status)
 
@@ -113,17 +90,16 @@ internal class GamesController {
     @PutMapping("/hangman")
     fun makeGuess_compatiblity(
         @RequestParam token: String,
-        @RequestParam letter: String,
-        session: HttpSession
+        @RequestParam letter: String
     ): ResponseEntity<*> =
-        makeGuess(GuessInput(token, letter), session)
+        makeGuess(GuessInput(token, letter))
 
     /**
      * Get a hint
      */
     @GetMapping("/hint")
-    fun giveMeAHint(@RequestParam token: String, session: HttpSession): HintOutput {
-        val game = getGame(token, session)
+    fun giveMeAHint(@RequestParam token: String): HintOutput {
+        val game = getGame(token)
         return HintOutput(game.token, game.giveMeAHint())
     }
 }
