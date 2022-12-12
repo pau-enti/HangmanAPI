@@ -1,11 +1,11 @@
-## RESTful Hangman
+# RESTful API Hangman
 
-REST API for playing Hangman creating using Spring Boot. It can be played in Catalan, English and Spanish words.
+This is a REST API for playing Hangman creating using Spring Boot. It can be played in Catalan, English and Spanish words.
 
 It was based on the code https://github.com/sastani/Hangman by Sinaastani.
 
 This is an adapted version written in Kotlin for the Degree in Video Game Development at ENTI-UB made by Pau GG. 
-Developer contact at ```pau.garcia@enti.cat``` 
+Developer contact at ```pau.garcia@enti.cat``` or ```pau.g.gozalvez@gmail.com```
 
 # Installation:
 
@@ -15,19 +15,52 @@ git clone https://github.com/pau-enti/HangmanAPI
 ```
 ## Run
 
+To run the server on localhost, use this command. Note that you can modify the default port (8080) 
+using the command line --server.port=5002
+
 ```
-java -jar target/Hangman-0.0.1-SNAPSHOT.jar
+java -jar releases/HangmanAPI-1.0.jar --server.port=5002
 ```
 
-## Making requests
+# Endpoints
 
-To get a new game:
+## New game
 
-**GET localhost:8080/new**
+``` 
+GET localhost:5002/new
+``` 
+or 
+``` 
+POST localhost:5002/hangman
+```
 
-To make a guess:
+You can append this optional parameters:
 
-**POST localhost:8080/guess{"game":[gameId], "guess":[character]}**
+- **lang**: modifies the language of the returned word. The available languages are 
+  - cat
+  - en
+  - es
+- **maxTries**: [Integer] set a maximum number of guesses. If this number is reached, the game status changes to lost. If this value is not set, there is no maximum guesses.
+
+The result is:
+```
+{ "token" : String,           // Alphanumeric token for identify this game
+  "hangman" : String,         // Hangman i.e for word water is "_____"
+  "language" : [en/cat/es],   // Default en
+  "maxTries" : Int or null
+}
+```
+
+Examples:
+
+GET localhost:5002/new?lang=cat&maxTries=7
+
+
+## Make a guess:
+
+``` 
+POST localhost:8080/guess{"game":[gameId], "guess":[character]}**
+``` 
 
 To get a JSON object containing game data for every game in the current session make the following API call:
 
