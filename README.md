@@ -1,11 +1,10 @@
-# REST Hangman
+# Hangman Campus API
 
-Welcome to the Hangman API! This API allows you to play Hangman games through HTTP requests. It can be played in Catalan, English and Spanish words.
+Welcome to the Hangman API! This API allows you to play the classic word guessing game of Hangman through simple HTTP requests. You can choose to play with Catalan, English, or Spanish words.
 
-It was based on the code https://github.com/sastani/Hangman by Sinaastani.
+This API was developed as part of the Degree in Video Game Development at ENTI-UB. If you have any questions or feedback, please don't hesitate to contact Pau at `pau.garcia@enti.cat`.
 
-This is an adapted version written in Kotlin for the Degree in Video Game Development at ENTI-UB made by Pau GG. 
-Developer contact at ```pau.garcia@enti.cat``` 
+To start playing, simply send a request to the API with your desired language and a word length, and the API will return a blank word for you to start guessing. You can then submit further requests with your letter guesses, and the API will let you know how many letters you have correctly guessed and how many incorrect guesses you have remaining. Try to guess the word before you run out of incorrect guesses!
 
 
 # Installation:
