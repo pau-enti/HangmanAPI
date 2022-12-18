@@ -7,13 +7,13 @@ This API was developed as part of the Degree in Video Game Development at ENTI-U
 To start playing, simply send a request to the API with your desired language and a word length, and the API will return a blank word for you to start guessing. You can then submit further requests with your letter guesses, and the API will let you know how many letters you have correctly guessed and how many incorrect guesses you have remaining. Try to guess the word before you run out of incorrect guesses!
 
 
-# Installation:
+## Installation
 
-## Clone this repository
+### Clone this repository
 ``` 
 git clone https://github.com/pau-enti/HangmanAPI
 ```
-## Run
+### Run
 
 ```
 java -jar target/Hangman-0.0.1-SNAPSHOT.jar --server.port=5002
