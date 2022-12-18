@@ -11,6 +11,7 @@ object ActiveGames : ArrayList<Game>() {
 
     private val deathTime = HashMap<Game, Long>()
 
+    @Suppress("unused")
     private val killer = Timer(true).apply {
         scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
