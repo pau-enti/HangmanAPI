@@ -49,7 +49,7 @@ GET /new?lang=es&maxTries=10
 "token": "fad0b6a1ef-7cc1-4e71-8d43-40b9e55f7fds",
 "language": "es",
 "maxTries": 10,
-"word": "_________",
+"hangman": "_________",
 "incorrectGuesses": 0
 }
 ```
